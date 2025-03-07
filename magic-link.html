@@ -1,0 +1,13 @@
+<html>
+  <body>
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      if (token) {
+        window.location.href = 'exp://6iynw7m-anonymous-8081.exp.direct'; // Redirect to app
+      } else {
+        alert('No token found. Please use the link from your email.');
+      }
+    </script>
+  </body>
+</html>
