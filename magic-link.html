@@ -1,13 +1,113 @@
+<!DOCTYPE html>
 <html>
-  <body>
-    <script>
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      if (token) {
-        window.location.href = 'exp://6iynw7m-anonymous-8081.exp.direct?token=' + encodeURIComponent(token);
-      } else {
-        alert('No token found. Please use the link from your email.');
+<head>
+  <title>Magic Link Redirect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .redirect-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 20px 0;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #status {
+      margin: 20px 0;
+      color: #555;
+    }
+    #error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Redirecting to App</h1>
+    <p id="status">Processing your authentication...</p>
+    <div id="error"></div>
+    <button id="manualRedirectBtn" class="redirect-button" style="display: none;">Tap to Return to App</button>
+  </div>
+
+  <script>
+    // Store URL params for potential manual redirection
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const refreshToken = urlParams.get('refresh_token');
+    const type = urlParams.get('type');
+    
+    // Function to create redirect URL based on possible app URL schemes
+    function createRedirectUrl() {
+      const possibleSchemes = [
+        'yourappscheme://', // Your custom URL scheme (if configured)
+        'exp://exp.host/@yourusername/yourappname', // Replace with your Expo published URL
+        window.localStorage.getItem('lastExpoUrl') // Fallback to last known URL from localStorage
+      ];
+      
+      // Build query parameters
+      let queryParams = '';
+      if (token) queryParams += `token=${encodeURIComponent(token)}`;
+      if (refreshToken) queryParams += `&refresh_token=${encodeURIComponent(refreshToken)}`;
+      if (type) queryParams += `&type=${encodeURIComponent(type)}`;
+      
+      // Try each scheme
+      for (const scheme of possibleSchemes) {
+        if (scheme) {
+          return `${scheme}?${queryParams}`;
+        }
       }
-    </script>
-  </body>
+      
+      // If no scheme works, at least show the token for manual copy
+      document.getElementById('error').innerHTML = `
+        <p>Unable to redirect automatically. Please copy this token and paste it in your app:</p>
+        <textarea rows="3" cols="40" onclick="this.select()">${token}</textarea>
+      `;
+      return null;
+    }
+    
+    // Setup manual redirect button
+    function setupManualRedirect(redirectUrl) {
+      const manualBtn = document.getElementById('manualRedirectBtn');
+      manualBtn.style.display = 'inline-block';
+      manualBtn.addEventListener('click', function() {
+        window.location.href = redirectUrl;
+      });
+    }
+    
+    // Main execution
+    window.onload = function() {
+      if (!token) {
+        document.getElementById('status').textContent = 'No authentication token found. Please use the link from your email.';
+        document.getElementById('error').textContent = 'Authentication failed: Missing token';
+        return;
+      }
+      
+      const redirectUrl = createRedirectUrl();
+      if (redirectUrl) {
+        document.getElementById('status').textContent = 'Redirecting you back to the app...';
+        setupManualRedirect(redirectUrl);
+        
+        // Try automatic redirect
+        setTimeout(function() {
+          window.location.href = redirectUrl;
+        }, 1000);
+      }
+    };
+  </script>
+</body>
 </html>
