@@ -1,18 +1,33 @@
 <html>
   <body>
     <script>
-      // Get the full URL and original link parameters
       const urlParams = new URLSearchParams(window.location.search);
-      const originalLink = decodeURIComponent(urlParams.get('link') || '');
-      const originalUrl = new URL(originalLink);
-      const originalParams = new URLSearchParams(originalUrl.search);
+      let oobCode, apiKey, mode;
 
-      const oobCode = originalParams.get('oobCode');
-      const apiKey = originalParams.get('apiKey');
-      const mode = originalParams.get('mode');
-
-      console.log('Original Query Parameters:', Object.fromEntries(originalParams));
+      // Log all query parameters for debugging
       console.log('Current Query Parameters:', Object.fromEntries(urlParams));
+
+      // Case 1: Check if there's a 'link' parameter (nested Magic Link)
+      const originalLink = decodeURIComponent(urlParams.get('link') || '');
+      if (originalLink) {
+        try {
+          const originalUrl = new URL(originalLink);
+          const originalParams = new URLSearchParams(originalUrl.search);
+          oobCode = originalParams.get('oobCode');
+          apiKey = originalParams.get('apiKey');
+          mode = originalParams.get('mode');
+          console.log('Original Query Parameters (from link):', Object.fromEntries(originalParams));
+        } catch (error) {
+          console.error('Error parsing original link:', error);
+        }
+      }
+
+      // Case 2: Parameters are directly in the URL
+      if (!oobCode) {
+        oobCode = urlParams.get('oobCode');
+        apiKey = urlParams.get('apiKey');
+        mode = urlParams.get('mode');
+      }
 
       if (oobCode && apiKey && mode === 'signIn') {
         console.log('Firebase Magic Link parameters:', { oobCode, apiKey, mode });
@@ -20,11 +35,11 @@
         console.log('Attempting redirect to:', redirectUrl);
 
         if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-          alert('Web test: Please copy this URL and paste it into your browser to complete sign-in:\n' + originalLink);
+          alert('Web test: Please copy this URL and paste it into your browser to complete sign-in:\n' + window.location.href);
         }
         window.location.href = redirectUrl;
       } else {
-        alert('Invalid Magic Link. No authentication token found. Original Parameters: ' + JSON.stringify(Object.fromEntries(originalParams)));
+        alert('Invalid Magic Link. No authentication token found. Parameters: ' + JSON.stringify(Object.fromEntries(urlParams)));
       }
     </script>
   </body>
