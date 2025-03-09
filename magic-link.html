@@ -1,95 +1,25 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <title>Magic Link Redirect</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-      padding: 20px;
-    }
-    h1 {
-      color: #333;
-    }
-    p {
-      margin: 20px 0;
-      color: #555;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 15px 32px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 16px;
-      margin: 20px 0;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-  </style>
-</head>
-<body>
-  <h1>Authentication Successful</h1>
-  <p id="status">Redirecting you back to the app...</p>
-  <button id="manualRedirect" style="display: none;">Return to App</button>
+  <body>
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const oobCode = urlParams.get('oobCode'); // Firebase Magic Link parameter
+      const apiKey = urlParams.get('apiKey');
+      const mode = urlParams.get('mode');
 
-  <script>
-    // Get URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const refreshToken = urlParams.get('refresh_token');
-    const type = urlParams.get('type');
-    
-    // Construct the URL for deep link back to the app
-    function constructDeepLink() {
-      // Base URL with scheme
-      let deepLink = 'bkg://';
-      
-      // Add parameters
-      let hasParams = false;
-      if (token) {
-        deepLink += `${hasParams ? '&' : '?'}token=${encodeURIComponent(token)}`;
-        hasParams = true;
+      if (oobCode && apiKey && mode === 'signIn') {
+        // Log the redirect attempt
+        console.log('Firebase Magic Link parameters:', { oobCode, apiKey, mode });
+
+        // Attempt to redirect to the app
+        const redirectUrl = 'bkg://auth/callback?oobCode=' + encodeURIComponent(oobCode);
+        console.log('Attempting redirect to:', redirectUrl);
+
+        // In a browser, show a message and provide the URL for manual testing
+        alert('Please copy this URL and paste it into your browser to complete the sign-in:\n' + window.location.href);
+        window.location.href = redirectUrl; // This will fail in web, but works on mobile
+      } else {
+        alert('Invalid Magic Link. Please use the link from your email.');
       }
-      if (refreshToken) {
-        deepLink += `${hasParams ? '&' : '?'}refresh_token=${encodeURIComponent(refreshToken)}`;
-        hasParams = true;
-      }
-      if (type) {
-        deepLink += `${hasParams ? '&' : '?'}type=${encodeURIComponent(type)}`;
-      }
-      
-      return deepLink;
-    }
-    
-    // When the page loads
-    window.onload = function() {
-      if (!token) {
-        document.getElementById('status').textContent = 'No authentication token found. Please use the link from your email.';
-        return;
-      }
-      
-      const deepLink = constructDeepLink();
-      
-      // Try to redirect automatically
-      setTimeout(function() {
-        window.location.href = deepLink;
-        
-        // Show manual button after a delay (in case automatic redirect fails)
-        setTimeout(function() {
-          document.getElementById('status').textContent = 'Click the button below if you are not redirected automatically.';
-          const manualButton = document.getElementById('manualRedirect');
-          manualButton.style.display = 'inline-block';
-          manualButton.onclick = function() {
-            window.location.href = deepLink;
-          };
-        }, 2000);
-      }, 1000);
-    };
-  </script>
-</body>
+    </script>
+  </body>
 </html>
